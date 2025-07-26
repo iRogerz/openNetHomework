@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0C7695962E3376A200BBC187 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0C7695952E3376A200BBC187 /* SnapKit */; };
+		0C7695992E33773E00BBC187 /* SkeletonView in Frameworks */ = {isa = PBXBuildFile; productRef = 0C7695982E33773E00BBC187 /* SkeletonView */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		0C9B92122E32095F0040EEC9 /* openNetHomeWork.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = openNetHomeWork.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +41,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0C7695992E33773E00BBC187 /* SkeletonView in Frameworks */,
+				0C7695962E3376A200BBC187 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +85,8 @@
 			);
 			name = openNetHomeWork;
 			packageProductDependencies = (
+				0C7695952E3376A200BBC187 /* SnapKit */,
+				0C7695982E33773E00BBC187 /* SkeletonView */,
 			);
 			productName = openNetHomeWork;
 			productReference = 0C9B92122E32095F0040EEC9 /* openNetHomeWork.app */;
@@ -107,6 +116,10 @@
 			);
 			mainGroup = 0C9B92092E32095F0040EEC9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0C7695942E3376A200BBC187 /* XCRemoteSwiftPackageReference "SnapKit" */,
+				0C7695972E33773E00BBC187 /* XCRemoteSwiftPackageReference "SkeletonView" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0C9B92132E32095F0040EEC9 /* Products */;
 			projectDirPath = "";
@@ -333,6 +346,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0C7695942E3376A200BBC187 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.1;
+			};
+		};
+		0C7695972E33773E00BBC187 /* XCRemoteSwiftPackageReference "SkeletonView" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Juanpe/SkeletonView.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.31.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0C7695952E3376A200BBC187 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0C7695942E3376A200BBC187 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
+		};
+		0C7695982E33773E00BBC187 /* SkeletonView */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0C7695972E33773E00BBC187 /* XCRemoteSwiftPackageReference "SkeletonView" */;
+			productName = SkeletonView;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0C9B920A2E32095F0040EEC9 /* Project object */;
 }
