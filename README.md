@@ -34,29 +34,131 @@ openNetHomeWork/
 
 ## 技術特色
 
-### 架構模式
+### Swift Concurrency / Combine 使用場景
 
-- **MVVM (Model-View-ViewModel)**：清晰的職責分離，便於測試和維護
-- **協議導向設計**：使用協議定義服務介面，便於切換不同實作
-- **響應式程式設計**：使用 Combine 框架處理資料流和狀態管理
+#### **Swift Concurrency (async/await)**
 
-### 核心技術
+- **API 資料獲取**：使用 `async/await` 處理非同步 API 呼叫
 
-- **Combine**：處理非同步資料流和狀態管理
-- **WebSocket**：即時資料推送
-- **SnapKit**：程式化 UI 佈局
-- **Codable**：JSON 資料序列化/反序列化
+  ```swift
+  func fetchInitialData() {
+      Task {
+          let matches = try await apiService.fetchMatches()
+          let odds = try await apiService.fetchOdds()
+          // 處理資料...
+      }
+  }
+  ```
 
-### 資料流程
+- **背景資料處理**：使用 `Task.detached` 在背景線程處理大量資料
+  ```swift
+  let processedData = await Task.detached(priority: .userInitiated) {
+      let sortedMatches = matches.sorted { $0.startTime > $1.startTime }
+      let oddsDict = Dictionary(uniqueKeysWithValues: odds.map { ($0.matchID, $0) })
+      return (sortedMatches, oddsDict)
+  }.value
+  ```
 
-1. **初始化**：載入模擬資料，顯示比賽列表
-2. **即時更新**：WebSocket 推送最新賠率，UI 即時更新
-3. **狀態監控**：監控連接狀態，顯示連接狀態指示器
-4. **動畫反饋**：賠率變化時提供視覺反饋
+#### **Combine 框架**
 
-## 使用說明
+- **WebSocket 即時資料流**：使用 `PassthroughSubject` 推送即時賠率更新
 
-1. **啟動應用程式**：應用程式啟動後會自動載入模擬資料
-2. **查看比賽列表**：表格顯示所有比賽和當前賠率
-3. **監控即時更新**：賠率變化時會有黃色閃爍動畫提示
-4. **查看連接狀態**：頂部狀態列顯示 WebSocket 連接狀態
+  ```swift
+  let oddsPublisher = PassthroughSubject<Odds, Never>()
+  ```
+
+- **UI 資料綁定**：使用 `@Published` 和 `sink` 實現響應式 UI 更新
+
+  ```swift
+  viewModel.$oddsDict
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] newOddsDict in
+          // UI 更新邏輯
+      }
+  ```
+
+- **批次處理優化**：使用 `.collect(.byTime())` 減少 UI 更新頻率
+  ```swift
+  .collect(.byTime(DispatchQueue.main, 0.2)) // 批次收集200ms內的更新
+  ```
+
+### 如何確保資料存取 Thread-Safe?
+
+#### **@MainActor 確保主線程安全**
+
+```swift
+@MainActor
+class MatchListViewModel: ObservableObject {
+    @Published var matches: [Match] = []
+    @Published var oddsDict: [Int: Odds] = [:]
+
+    // 所有方法自動在主線程執行
+    func updateData() {
+        self.matches = newMatches // 自動在主線程
+    }
+}
+```
+
+#### **DispatchQueue.main 確保 UI 更新**
+
+```swift
+// 在背景線程處理資料
+let processedData = await Task.detached { ... }.value
+
+// 在主線程更新 UI
+DispatchQueue.main.async {
+    self.matches = processedData.0
+    self.oddsDict = processedData.1
+}
+```
+
+#### **Combine 的 Thread Safety**
+
+```swift
+webSocketService.oddsPublisher
+    .receive(on: DispatchQueue.main) // 確保在主線程接收
+    .sink { [weak self] odds in
+        self?.oddsDict[odds.matchID] = odds // 在主線程更新
+    }
+```
+
+#### **效能優化策略**
+
+- **批次處理**：使用 `.collect(.byTime())` 減少更新頻率
+- **背景處理**：大量資料處理在 background thread
+- **記憶體管理**：使用 `[weak self]` 避免循環引用
+- **訂閱管理**：使用 `cancellables` 管理訂閱生命週期
+
+### UI 與 ViewModel 資料綁定方式
+
+#### **UIKit + Combine 綁定**
+
+```swift
+// ViewModel 中的 @Published 屬性
+@Published var matches: [Match] = []
+@Published var oddsDict: [Int: Odds] = [:]
+
+// ViewController 中的訂閱
+viewModel.$matches
+    .receive(on: DispatchQueue.main)
+    .sink { [weak self] _ in
+        self?.tableView.reloadData()
+    }
+    .store(in: &cancellables)
+
+viewModel.$oddsDict
+    .receive(on: DispatchQueue.main)
+    .sink { [weak self] newOddsDict in
+        // 檢測變化並更新特定行
+        let changedMatchIDs = // 檢測邏輯
+        let indexPaths = // 計算需要更新的行
+        self?.tableView.reloadRows(at: indexPaths, with: .none)
+    }
+    .store(in: &cancellables)
+```
+
+#### **資料流架構**
+
+```
+WebSocket → PassthroughSubject → ViewModel → @Published → ViewController → UI更新
+```
