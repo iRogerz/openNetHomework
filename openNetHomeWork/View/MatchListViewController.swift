@@ -9,14 +9,20 @@ import Combine
 import SnapKit
 import UIKit
 
+
 class MatchListViewController: UIViewController {
     // MARK: - properties
 
     private let viewModel = MatchListViewModel()
     private let tableView = UITableView()
+    
+    /// 用於管理 Combine 訂閱的集合
     private var cancellables = Set<AnyCancellable>()
+    
+    /// 上一次的賠率，用於檢測賠率變化
     private var lastOddsDict: [Int: Odds] = [:]
 
+    /// 顯示WebSocket連接狀態
     private let statusLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
@@ -27,6 +33,8 @@ class MatchListViewController: UIViewController {
         return label
     }()
 
+    // MARK: - lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupStatusLabel()
@@ -36,7 +44,6 @@ class MatchListViewController: UIViewController {
     }
 
     // MARK: - setupUI
-
     private func setupStatusLabel() {
         view.addSubview(statusLabel)
         statusLabel.snp.makeConstraints { make in
@@ -57,7 +64,9 @@ class MatchListViewController: UIViewController {
         }
     }
 
+    // MARK: - ViewModel Binding
     private func bindViewModel() {
+        // 訂閱比賽列表變化
         viewModel.$matches
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
@@ -65,10 +74,13 @@ class MatchListViewController: UIViewController {
             }
             .store(in: &cancellables)
 
+        // 訂閱賠率變化
         viewModel.$oddsDict
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newOddsDict in
                 guard let self = self else { return }
+                
+                // 檢測賠率變化的比賽ID
                 let changedMatchIDs = newOddsDict.compactMap { key, value -> Int? in
                     if let old = self.lastOddsDict[key] {
                         if old.teamAOdds != value.teamAOdds || old.teamBOdds != value.teamBOdds {
@@ -79,12 +91,16 @@ class MatchListViewController: UIViewController {
                         return key
                     }
                 }
+                
+                // 獲取需要更新的表格行索引
                 let indexPaths = self.viewModel.matches.enumerated().compactMap { idx, match -> IndexPath? in
                     changedMatchIDs.contains(match.matchID) ? IndexPath(row: idx, section: 0) : nil
                 }
+                
+                // 如果有變化的行，則更新並添加動畫效果
                 if !indexPaths.isEmpty {
                     self.tableView.reloadRows(at: indexPaths, with: .none)
-                    // cell 閃爍動畫
+                    
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                         for indexPath in indexPaths {
                             if let cell = self.tableView.cellForRow(at: indexPath) {
@@ -93,11 +109,13 @@ class MatchListViewController: UIViewController {
                         }
                     }
                 }
+                
+                // 更新上一次的賠率
                 self.lastOddsDict = newOddsDict
             }
             .store(in: &cancellables)
 
-        // 監聽連線狀態
+        // 監聽WebSocket連接狀態變化
         viewModel.webSocketConnectionStatePublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
@@ -132,6 +150,7 @@ class MatchListViewController: UIViewController {
     }
 }
 
+// MARK: - UITableViewDelegate, UITableViewDataSource
 extension MatchListViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int {
         return viewModel.matches.count

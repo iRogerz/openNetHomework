@@ -4,22 +4,59 @@
 
 這是一個 iOS 應用程式，用於即時監控賽事賠率變化。系統採用 WebSocket 連接來接收即時數據，並使用 MVVM 架構模式來管理狀態和 UI 更新。
 
+### 主要功能
+
+- **即時賠率監控**：透過 WebSocket 即時接收賠率更新
+- **比賽列表顯示**：顯示所有比賽的基本資訊和當前賠率
+- **連接狀態指示**：顯示 WebSocket 連接狀態（已連線、已斷線、重連中）
+- **動畫效果**：當賠率變化時，對應的比賽項目會有閃爍動畫提示
+- **模擬資料**：使用本地 JSON 檔案提供模擬資料，方便開發和測試
+
 ## 專案架構
 
 ```
 openNetHomeWork/
-├── AppDelegate.swift              # 應用程式入口點
-├── SceneDelegate.swift            # 場景委託，管理 UI 生命週期
+├── AppDelegate.swift              # 應用程式入口點，處理應用程式生命週期
+├── SceneDelegate.swift            # 場景委託，管理 UI 生命週期和主視窗設置
 ├── Model/                        # 數據模型層
-│   ├── Match.swift               # 賽事模型
-│   └── Odds.swift                # 賠率模型
+│   ├── Match.swift               # 賽事模型，包含比賽ID、隊伍名稱、開始時間
+│   └── Odds.swift                # 賠率模型，包含比賽ID和各隊伍賠率
 ├── View/                         # 視圖層
-│   └── MatchListViewController.swift  # 賽事列表視圖控制器
+│   └── MatchListViewController.swift  # 賽事列表視圖控制器，負責UI顯示和互動
 ├── ViewModel/                    # 視圖模型層
-│   └── MatchListViewModel.swift  # 賽事列表視圖模型
+│   └── MatchListViewModel.swift  # 賽事列表視圖模型，處理業務邏輯和資料管理
 ├── Service/                      # 服務層
-│   ├── APIService.swift          # API 服務
-│   └── WebSocketManager.swift    # WebSocket 連接管理
+│   ├── APIService.swift          # API 服務，提供資料獲取介面（模擬和真實實作）
+│   └── WebSocketManager.swift    # WebSocket 連接管理，處理即時資料推送
 └── Resource/                     # 資源文件
-    └── mock_data.json           # 模擬數據
+    └── mock_data.json           # 模擬數據，包含100場比賽和對應的賠率資料
 ```
+
+## 技術特色
+
+### 架構模式
+
+- **MVVM (Model-View-ViewModel)**：清晰的職責分離，便於測試和維護
+- **協議導向設計**：使用協議定義服務介面，便於切換不同實作
+- **響應式程式設計**：使用 Combine 框架處理資料流和狀態管理
+
+### 核心技術
+
+- **Combine**：處理非同步資料流和狀態管理
+- **WebSocket**：即時資料推送
+- **SnapKit**：程式化 UI 佈局
+- **Codable**：JSON 資料序列化/反序列化
+
+### 資料流程
+
+1. **初始化**：載入模擬資料，顯示比賽列表
+2. **即時更新**：WebSocket 推送最新賠率，UI 即時更新
+3. **狀態監控**：監控連接狀態，顯示連接狀態指示器
+4. **動畫反饋**：賠率變化時提供視覺反饋
+
+## 使用說明
+
+1. **啟動應用程式**：應用程式啟動後會自動載入模擬資料
+2. **查看比賽列表**：表格顯示所有比賽和當前賠率
+3. **監控即時更新**：賠率變化時會有黃色閃爍動畫提示
+4. **查看連接狀態**：頂部狀態列顯示 WebSocket 連接狀態
